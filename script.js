@@ -45,19 +45,29 @@ const cartCountSpan = document.getElementById('cartCount');
 const clearCartBtn = document.getElementById('clearCartBtn');
 const placeOrderBtn = document.getElementById('placeOrderBtn');
 const customerName = document.getElementById('customerName');
-const customerEmail = document.getElementById('customerEmail');
-const customerPhone = document.getElementById('customerPhone');
+const customerFacebook = document.getElementById('customerFacebook');
 const customerAddress = document.getElementById('customerAddress');
 const specialInstructions = document.getElementById('specialInstructions');
 const navLinks = document.querySelectorAll('.nav-link');
 const searchInput = document.getElementById('searchInput');
 
+// Modal Elements
+const productModal = document.getElementById('productModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const modalImage = document.getElementById('modalImage');
+const modalBadge = document.getElementById('modalBadge');
+const modalName = document.getElementById('modalName');
+const modalQuote = document.getElementById('modalQuote');
+const modalSpark = document.getElementById('modalSpark');
+const modalPrice = document.getElementById('modalPrice');
+const modalAddToCartBtn = document.getElementById('modalAddToCartBtn');
+
+let currentProduct = null;
+
 // Cart State
 let cart = [];
 let currentFilter = 'all';
 let currentSearch = '';
-
-// Orders (for seller)
 let orders = [];
 
 // Load cart from localStorage
@@ -69,12 +79,10 @@ function loadCart() {
     updateCartUI();
 }
 
-// Save cart to localStorage
 function saveCart() {
     localStorage.setItem('mavi_petals_cart', JSON.stringify(cart));
 }
 
-// Load orders from localStorage
 function loadOrders() {
     const savedOrders = localStorage.getItem('mavi_petals_orders');
     if (savedOrders) {
@@ -83,7 +91,6 @@ function loadOrders() {
     updateSellerDashboard();
 }
 
-// Save orders to localStorage
 function saveOrders() {
     localStorage.setItem('mavi_petals_orders', JSON.stringify(orders));
 }
@@ -110,7 +117,6 @@ function addToCart(productName, productPrice) {
     updateCartUI();
 }
 
-// Remove from cart
 function removeFromCart(index) {
     const removedItem = cart[index];
     cart.splice(index, 1);
@@ -119,7 +125,6 @@ function removeFromCart(index) {
     showToast(`🗑️ ${removedItem.name} removed from cart`);
 }
 
-// Update cart UI
 function updateCartUI() {
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
     cartCountSpan.textContent = totalItems;
@@ -162,7 +167,6 @@ function updateCartUI() {
     });
 }
 
-// Clear cart
 function clearCart() {
     if (cart.length > 0) {
         cart = [];
@@ -172,7 +176,6 @@ function clearCart() {
     }
 }
 
-// Place order
 function placeOrder() {
     if (cart.length === 0) {
         showToast('Please add items to your cart first!');
@@ -180,11 +183,10 @@ function placeOrder() {
     }
     
     const name = customerName.value.trim();
-    const email = customerEmail.value.trim();
-    const phone = customerPhone.value.trim();
+    const facebook = customerFacebook.value.trim();
     const address = customerAddress.value.trim();
     
-    if (!name || !email || !phone || !address) {
+    if (!name || !facebook || !address) {
         showToast('Please fill in all required fields!');
         return;
     }
@@ -194,7 +196,7 @@ function placeOrder() {
     const newOrder = {
         id: 'ORD-' + Date.now(),
         date: new Date().toLocaleString(),
-        customer: { name, email, phone, address },
+        customer: { name, facebook, address },
         items: cart.map(item => ({ 
             name: item.name, 
             price: item.price, 
@@ -210,23 +212,18 @@ function placeOrder() {
     saveOrders();
     updateSellerDashboard();
     
-    // Clear cart and form
     cart = [];
     saveCart();
     updateCartUI();
     customerName.value = '';
-    customerEmail.value = '';
-    customerPhone.value = '';
+    customerFacebook.value = '';
     customerAddress.value = '';
     specialInstructions.value = '';
     
     showToast(`🎉 Order placed successfully! Order ID: ${newOrder.id}`);
-    
-    // Scroll to top
     document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Update seller dashboard
 function updateSellerDashboard() {
     const totalOrdersCountSpan = document.getElementById('totalOrdersCount');
     const totalRevenueSpan = document.getElementById('totalRevenue');
@@ -250,8 +247,8 @@ function updateSellerDashboard() {
                     <span class="order-date">${order.date}</span>
                 </div>
                 <div class="order-customer">
-                    <p><strong>${order.customer.name}</strong> | ${order.customer.phone}</p>
-                    <p>${order.customer.email}</p>
+                    <p><strong>${order.customer.name}</strong></p>
+                    <p>FB: ${order.customer.facebook}</p>
                     <p>📦 ${order.customer.address}</p>
                 </div>
                 <ul class="order-items-list">
@@ -265,7 +262,6 @@ function updateSellerDashboard() {
     if (ordersListContainer) ordersListContainer.innerHTML = ordersHtml;
 }
 
-// Show toast notification
 function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
@@ -274,7 +270,24 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 2000);
 }
 
-// Render products
+// Open modal with product details
+function openModal(product) {
+    currentProduct = product;
+    modalImage.src = product.image;
+    modalBadge.textContent = product.badge;
+    modalName.textContent = product.name;
+    modalQuote.textContent = product.quote;
+    modalSpark.textContent = product.spark;
+    modalPrice.textContent = `₱ ${product.price}`;
+    productModal.style.display = 'flex';
+}
+
+function closeModal() {
+    productModal.style.display = 'none';
+    currentProduct = null;
+}
+
+// Render simplified products (only image, name, price, view details button)
 function renderProducts() {
     let filtered = [...bouquetsData];
     
@@ -297,43 +310,51 @@ function renderProducts() {
     }
     
     bouquetGrid.innerHTML = filtered.map(bouquet => `
-        <div class="bouquet-card" data-name="${bouquet.name}" data-price="${bouquet.price}">
+        <div class="bouquet-card" data-name="${bouquet.name}">
             <div class="photo-frame">
                 <img src="${bouquet.image}" alt="${bouquet.name}" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML += '<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:#aa9b8b\'><i class=\'fa-regular fa-image\'></i>  ${bouquet.name}</div>'">
             </div>
-            <span class="inspired-badge">${bouquet.badge}</span>
             <div class="bouquet-name">${bouquet.name}</div>
-            <div class="inspired-quote">
-                <i class="fa-regular fa-star" style="margin-right: 6px; color:#bba88c;"></i> 
-                ${bouquet.quote}
+            <div class="price-block-simple">
+                <span class="price-simple">₱ ${bouquet.price}</span>
             </div>
-            <div class="wire-spark">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> ${bouquet.spark}
-            </div>
-            <div class="price-block">
-                <span class="price-label">Price</span>
-                <span class="price-value">₱ ${bouquet.price} <small>PESO</small></span>
-            </div>
-            <button class="add-to-cart-card" data-name="${bouquet.name}" data-price="${bouquet.price}">
-                <i"></i> Add to Cart
+            <button class="view-details-btn" data-name="${bouquet.name}">
+                View Details
             </button>
         </div>
     `).join('');
     
-    document.querySelectorAll('.add-to-cart-card').forEach(btn => {
+    // Add event listeners to view details buttons
+    document.querySelectorAll('.view-details-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const name = btn.getAttribute('data-name');
-            const price = btn.getAttribute('data-price');
-            addToCart(name, price);
+            const product = bouquetsData.find(p => p.name === name);
+            if (product) openModal(product);
         });
     });
 }
 
-// Filter and search
-function updateFilteredProducts() {
-    renderProducts();
+// Modal Add to Cart
+if (modalAddToCartBtn) {
+    modalAddToCartBtn.addEventListener('click', () => {
+        if (currentProduct) {
+            addToCart(currentProduct.name, currentProduct.price);
+            closeModal();
+        }
+    });
 }
+
+// Close modal events
+if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', closeModal);
+}
+
+window.addEventListener('click', (e) => {
+    if (e.target === productModal) {
+        closeModal();
+    }
+});
 
 // Navigation filter
 navLinks.forEach(link => {
@@ -382,5 +403,5 @@ loadCart();
 loadOrders();
 renderProducts();
 
-console.log('🌸 Mavi Petals — 30 handmade fuzzy wire bouquets ready!');
-console.log('🛒 Add to Cart system active | Orders saved locally');
+console.log('🌸 Mavi Petals — Simplified cards with modal details!');
+console.log('🛒 Click "View Details" to see full product info and add to cart');
