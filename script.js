@@ -69,6 +69,7 @@ let cart = [];
 let currentFilter = 'all';
 let currentSearch = '';
 let orders = [];
+let orderStatusFilter = 'all'; // 'all', 'pending', 'completed'
 
 // Load cart from localStorage
 function loadCart() {
@@ -87,12 +88,70 @@ function loadOrders() {
     const savedOrders = localStorage.getItem('mavi_petals_orders');
     if (savedOrders) {
         orders = JSON.parse(savedOrders);
+        // Check for expired completed orders (older than 24 hours)
+        cleanupExpiredOrders();
     }
     updateSellerDashboard();
 }
 
 function saveOrders() {
     localStorage.setItem('mavi_petals_orders', JSON.stringify(orders));
+}
+
+// Clean up orders that have been completed for more than 24 hours
+function cleanupExpiredOrders() {
+    const now = new Date();
+    const expiredCount = orders.filter(order => {
+        if (order.status === 'Completed' && order.completedAt) {
+            const completedDate = new Date(order.completedAt);
+            const hoursDiff = (now - completedDate) / (1000 * 60 * 60);
+            return hoursDiff >= 24;
+        }
+        return false;
+    }).length;
+    
+    orders = orders.filter(order => {
+        if (order.status === 'Completed' && order.completedAt) {
+            const completedDate = new Date(order.completedAt);
+            const hoursDiff = (now - completedDate) / (1000 * 60 * 60);
+            return hoursDiff < 24;
+        }
+        return true;
+    });
+    
+    if (expiredCount > 0) {
+        console.log(`🗑️ Auto-cleaned ${expiredCount} completed orders (older than 24 hours)`);
+        saveOrders();
+    }
+}
+
+// Mark order as completed
+function markOrderCompleted(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (order && order.status !== 'Completed') {
+        order.status = 'Completed';
+        order.completedAt = new Date().toISOString();
+        saveOrders();
+        updateSellerDashboard();
+        showToast(`✅ Order ${orderId} marked as completed! It will be auto-deleted after 24 hours.`);
+    }
+}
+
+// Delete order permanently
+function deleteOrder(orderId) {
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex !== -1) {
+        const order = orders[orderIndex];
+        orders.splice(orderIndex, 1);
+        saveOrders();
+        updateSellerDashboard();
+        showToast(`🗑️ Order ${orderId} deleted permanently`);
+    }
+}
+
+// Get pending orders count
+function getPendingOrdersCount() {
+    return orders.filter(order => order.status === 'Pending').length;
 }
 
 // Add to cart
@@ -196,6 +255,7 @@ function placeOrder() {
     const newOrder = {
         id: 'ORD-' + Date.now(),
         date: new Date().toLocaleString(),
+        createdAt: new Date().toISOString(),
         customer: { name, facebook, address },
         items: cart.map(item => ({ 
             name: item.name, 
@@ -224,26 +284,49 @@ function placeOrder() {
     document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
 }
 
+// Update seller dashboard with order management
 function updateSellerDashboard() {
     const totalOrdersCountSpan = document.getElementById('totalOrdersCount');
     const totalRevenueSpan = document.getElementById('totalRevenue');
     const ordersListContainer = document.getElementById('ordersList');
     
+    // Update stats
+    const pendingOrders = getPendingOrdersCount();
     if (totalOrdersCountSpan) totalOrdersCountSpan.textContent = orders.length;
+    
     const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
     if (totalRevenueSpan) totalRevenueSpan.textContent = `₱${totalRevenue.toLocaleString()}`;
     
-    if (orders.length === 0) {
+    // Update pending orders badge (optional - add to HTML if needed)
+    const pendingBadge = document.getElementById('pendingOrdersBadge');
+    if (pendingBadge) pendingBadge.textContent = pendingOrders;
+    
+    // Filter orders based on status
+    let filteredOrders = orders;
+    if (orderStatusFilter === 'pending') {
+        filteredOrders = orders.filter(o => o.status === 'Pending');
+    } else if (orderStatusFilter === 'completed') {
+        filteredOrders = orders.filter(o => o.status === 'Completed');
+    }
+    
+    if (filteredOrders.length === 0) {
         if (ordersListContainer) ordersListContainer.innerHTML = '<div class="empty-orders">No orders placed yet</div>';
         return;
     }
     
     let ordersHtml = '';
-    orders.forEach(order => {
+    filteredOrders.forEach(order => {
+        const isPending = order.status === 'Pending';
+        const statusClass = isPending ? 'status-pending' : 'status-completed';
+        const statusText = isPending ? '⏳ Pending' : '✅ Completed';
+        
         ordersHtml += `
-            <div class="order-card">
+            <div class="order-card ${statusClass}">
                 <div class="order-card-header">
-                    <span class="order-id">${order.id}</span>
+                    <div>
+                        <span class="order-id">${order.id}</span>
+                        <span class="order-status ${statusClass}">${statusText}</span>
+                    </div>
                     <span class="order-date">${order.date}</span>
                 </div>
                 <div class="order-customer">
@@ -256,10 +339,32 @@ function updateSellerDashboard() {
                 </ul>
                 ${order.specialInstructions ? `<p><em>Note: ${order.specialInstructions}</em></p>` : ''}
                 <div class="order-total-small">Total: ₱${order.total.toLocaleString()}</div>
+                <div class="order-actions">
+                    ${isPending ? `<button class="complete-order-btn" data-id="${order.id}"><i class="fa-regular fa-check-circle"></i> Mark as Done</button>` : `<span class="completed-badge">✨ Completed</span>`}
+                    <button class="delete-order-btn" data-id="${order.id}"><i class="fa-regular fa-trash-can"></i> Delete</button>
+                </div>
             </div>
         `;
     });
+    
     if (ordersListContainer) ordersListContainer.innerHTML = ordersHtml;
+    
+    // Add event listeners to order buttons
+    document.querySelectorAll('.complete-order-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const orderId = btn.getAttribute('data-id');
+            markOrderCompleted(orderId);
+        });
+    });
+    
+    document.querySelectorAll('.delete-order-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const orderId = btn.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this order?')) {
+                deleteOrder(orderId);
+            }
+        });
+    });
 }
 
 function showToast(message) {
@@ -287,7 +392,7 @@ function closeModal() {
     currentProduct = null;
 }
 
-// Render simplified products (only image, name, price, view details button)
+// Render simplified products
 function renderProducts() {
     let filtered = [...bouquetsData];
     
@@ -324,7 +429,6 @@ function renderProducts() {
         </div>
     `).join('');
     
-    // Add event listeners to view details buttons
     document.querySelectorAll('.view-details-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -382,10 +486,37 @@ const sellerDashboard = document.getElementById('sellerDashboard');
 const showSellerBtn = document.getElementById('showSellerBtn');
 const closeDashboardBtn = document.getElementById('closeDashboardBtn');
 
+// Add filter buttons to seller dashboard (update HTML separately)
+function addFilterButtons() {
+    const sellerStatsDiv = document.querySelector('.seller-stats');
+    if (sellerStatsDiv && !document.getElementById('orderFilters')) {
+        const filterDiv = document.createElement('div');
+        filterDiv.className = 'order-filters';
+        filterDiv.id = 'orderFilters';
+        filterDiv.innerHTML = `
+            <button class="filter-btn active" data-filter="all">📋 All Orders</button>
+            <button class="filter-btn" data-filter="pending">⏳ Pending (${getPendingOrdersCount()})</button>
+            <button class="filter-btn" data-filter="completed">✅ Completed</button>
+        `;
+        sellerStatsDiv.parentNode.insertBefore(filterDiv, sellerStatsDiv.nextSibling);
+        
+        // Add filter event listeners
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                orderStatusFilter = btn.getAttribute('data-filter');
+                updateSellerDashboard();
+            });
+        });
+    }
+}
+
 if (showSellerBtn) {
     showSellerBtn.addEventListener('click', () => {
         sellerDashboard.classList.toggle('show');
         if (sellerDashboard.classList.contains('show')) {
+            addFilterButtons();
             updateSellerDashboard();
             sellerDashboard.scrollIntoView({ behavior: 'smooth' });
         }
@@ -398,10 +529,21 @@ if (closeDashboardBtn) {
     });
 }
 
+// Auto-cleanup every hour
+setInterval(() => {
+    cleanupExpiredOrders();
+    updateSellerDashboard();
+}, 60 * 60 * 1000); // Check every hour
+
 // Initialize
 loadCart();
 loadOrders();
 renderProducts();
+addFilterButtons();
 
-console.log('🌸 Mavi Petals — Simplified cards with modal details!');
-console.log('🛒 Click "View Details" to see full product info and add to cart');
+console.log('🌸 Mavi Petals — Simplified cards with order management!');
+console.log('📋 Seller dashboard now has:');
+console.log('   ✅ Mark orders as Completed');
+console.log('   🗑️ Delete orders manually');
+console.log('   ⏰ Auto-delete completed orders after 24 hours');
+console.log('   📊 Filter by Pending/Completed/All');
