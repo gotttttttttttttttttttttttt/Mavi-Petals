@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Mavi Petals · Handmade Fuzzy Wire Bouquets</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- FULL SCREEN TITLE SECTION -->
+    <section class="fullscreen-hero" id="heroSection">
+        <div class="hero-overlay"></div>
+        <div class="hero-container">
+            <div class="hero-badge">
+                <i class="fa-regular fa-flower-daffodil"></i> handmade Bouquets
+            </div>
+            <div class="hero-title-wrapper">
+                <h1 class="hero-main-title">Mavi <span>Petals</span></h1>
+                <div class="hero-collection-tag"><strong>since 2025</strong></div>
+            </div>
+            <p class="hero-tagline">Showcasing the power of creativity in every petal.</p>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-number">30+</span>
+                    <span class="stat-label">Unique Designs</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Handmade</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">✨</span>
+                    <span class="stat-label">Fuzzy Wire Art</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CATALOG CONTENT -->
+    <div class="catalog-content" id="catalogSection">
+        <!-- NAVIGATION BAR -->
+        <nav class="catalog-nav">
+            <div class="nav-links">
+                <a href="#" class="nav-link active" data-nav="all">
+                    <i class="fa-regular fa-compass"></i> All
+                </a>
+                <a href="#" class="nav-link" data-nav="signature">
+                    <i class="fa-regular fa-star"></i> Signature
+                </a>
+                <a href="#" class="nav-link" data-nav="limited">
+                    <i class="fa-regular fa-gem"></i> Single
+                </a>
+                <a href="#" class="nav-link" data-nav="best">
+                    <i class="fa-regular fa-heart"></i> Best Sellers
+                </a>
+            </div>
+            <div class="nav-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search bouquet...">
+            </div>
+        </nav>
+
+        <!-- Brand Header -->
+        <div class="brand-block">
+            <div class="brand-left">
+                <span class="handmadee">HANDMADE</span>
+                <span class="fuzzywire">Mavi Petals</span>
+            </div>
+            <a href="https://www.facebook.com/people/MAVI-petals/61575164455628/" target="_blank" class="brand-url"><i class="fa-brands fa-facebook"></i> Mavi Petals</a>
+        </div>
+
+        <!-- PRODUCT GRID -->
+        <div class="bouquet-grid" id="bouquetGrid"></div>
+
+        <!-- SHOPPING CART SECTION (Bottom) -->
+        <div class="cart-section" id="cartSection">
+            <div class="cart-header">
+                <h2><i"></i> Your Shopping Cart</h2>
+                <button class="clear-cart-btn" id="clearCartBtn">
+                    <i class="fa-regular fa-trash-can"></i> Clear Cart
+                </button>
+            </div>
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart">🛒 Your cart is empty. Add some beautiful bouquets!</div>
+            </div>
+            <div class="cart-summary">
+                <div class="cart-total">
+                    <span>Total Amount:</span>
+                    <span id="cartTotal">₱0</span>
+                </div>
+                <div class="cart-count">
+                    <span>Items:</span>
+                    <span id="cartCount">0</span>
+                </div>
+            </div>
+            
+            <!-- Customer Information Form -->
+            <div class="customer-form">
+                <h3><i class="fa-regular fa-user"></i> Customer Information</h3>
+                <input type="text" id="customerName" placeholder="Full Name *" required>
+                <input type="email" id="customerEmail" placeholder="Email Address *" required>
+                <input type="tel" id="customerPhone" placeholder="Phone Number *" required>
+                <textarea id="customerAddress" placeholder="Delivery Address *" rows="3"></textarea>
+                <textarea id="specialInstructions" placeholder="Special Instructions (optional)" rows="2"></textarea>
+            </div>
+            
+            <button class="place-order-btn" id="placeOrderBtn">
+                <i class="fa-regular fa-check-circle"></i> Place Order
+            </button>
+        </div>
+
+        <!-- SELLER DASHBOARD (Hidden by default) -->
+        <div class="seller-dashboard" id="sellerDashboard">
+            <div class="seller-header">
+                <h2><i class="fa-regular fa-chart-line"></i> Seller Dashboard</h2>
+                <button class="close-dashboard-btn" id="closeDashboardBtn">
+                    <i class="fa-regular fa-eye-slash"></i> Hide
+                </button>
+            </div>
+            <div class="seller-stats">
+                <div class="stat-card">
+                    <span class="stat-value" id="totalOrdersCount">0</span>
+                    <span class="stat-label">Total Orders</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalRevenue">₱0</span>
+                    <span class="stat-label">Total Revenue</span>
+                </div>
+            </div>
+            <div class="orders-list" id="ordersList">
+                <div class="empty-orders">No orders placed yet</div>
+            </div>
+        </div>
+
+        <!-- Seller Dashboard Toggle Button -->
+        <button class="seller-btn" id="showSellerBtn">
+            <i"></i> Seller View
+        </button>
+
+        <!-- Footer -->
+        <div class="catalog-footer">
+            <div class="footer-left">
+                <i class="fa-regular fa-flower"></i> HANDMADE fuzzy wire · thirty unique editions
+            </div>
+            <div class="footer-right">
+                <span>10 Signature</span><span class="dot"></span><span>10 Single</span><span class="dot"></span><span>10 Best Sellers</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
