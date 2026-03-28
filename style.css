@@ -1127,4 +1127,125 @@ body::before {
         align-items: center;
         gap: 0.5rem;
     }
+
+    /* Order Management Styles */
+.order-status {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.order-status.status-pending {
+    background: #f39c12;
+    color: white;
+}
+
+.order-status.status-completed {
+    background: #27ae60;
+    color: white;
+}
+
+.order-actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.complete-order-btn {
+    background: #27ae60;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.complete-order-btn:hover {
+    background: #219a52;
+    transform: translateY(-2px);
+}
+
+.delete-order-btn {
+    background: #e74c3c;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.delete-order-btn:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+.completed-badge {
+    background: rgba(39, 174, 96, 0.2);
+    color: #27ae60;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.order-filters {
+    display: flex;
+    gap: 0.8rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: rgba(210, 180, 150, 0.3);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #5c3e2e;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-btn.active {
+    background: #b28b65;
+    color: white;
+}
+
+.filter-btn:hover {
+    background: #b28b65;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.order-card {
+    position: relative;
+    transition: all 0.2s;
+}
+
+.order-card.status-pending {
+    border-left: 4px solid #f39c12;
+}
+
+.order-card.status-completed {
+    border-left: 4px solid #27ae60;
+    opacity: 0.85;
+}
 }
