@@ -112,8 +112,8 @@
             </button>
         </div>
 
-        <!-- SELLER DASHBOARD (Hidden by default) -->
-        <div class="seller-dashboard" id="sellerDashboard">
+        <!-- SELLER DASHBOARD (Hidden by default, password protected) -->
+        <div class="seller-dashboard" id="sellerDashboard" style="display: none;">
             <div class="seller-header">
                 <h2><i class="fa-regular fa-chart-line"></i> Seller Dashboard</h2>
                 <button class="close-dashboard-btn" id="closeDashboardBtn">
@@ -135,9 +135,9 @@
             </div>
         </div>
 
-        <!-- Seller Dashboard Toggle Button -->
-        <button class="seller-btn" id="showSellerBtn">
-            <i"></i> Seller View
+        <!-- Seller Dashboard Toggle Button (Hidden from customers) -->
+        <button class="seller-btn" id="showSellerBtn" style="display: none;">
+            <i class="fa-regular fa-store"></i> Seller View
         </button>
 
         <!-- Footer -->
@@ -166,6 +166,20 @@
             <button class="modal-add-to-cart" id="modalAddToCartBtn">
                 Add to Cart
             </button>
+        </div>
+    </div>
+
+    <!-- Password Modal for Seller Access -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content password-modal">
+            <h2><i class="fa-regular fa-lock"></i> Seller Access</h2>
+            <p>Enter password to access seller dashboard</p>
+            <input type="password" id="sellerPassword" placeholder="Enter password" class="password-input">
+            <div class="password-buttons">
+                <button class="password-submit-btn" id="submitPasswordBtn">Access Dashboard</button>
+                <button class="password-cancel-btn" id="cancelPasswordBtn">Cancel</button>
+            </div>
+            <div id="passwordError" class="password-error" style="display: none;">Incorrect password! Please try again.</div>
         </div>
     </div>
 
