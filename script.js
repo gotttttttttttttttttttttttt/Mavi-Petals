@@ -408,7 +408,7 @@ function showToast(message) {
     toast.className = 'toast-notification';
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    setTimeout(() => toast.remove(), 10000);
 }
 
 // Open modal with product details
