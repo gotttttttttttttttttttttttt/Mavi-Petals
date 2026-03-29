@@ -41,6 +41,7 @@ const bouquetsData = [
 const bouquetGrid = document.getElementById('bouquetGrid');
 const cartItemsContainer = document.getElementById('cartItems');
 const cartTotalSpan = document.getElementById('cartTotal');
+const cartSubtotalSpan = document.getElementById('cartSubtotal');
 const cartCountSpan = document.getElementById('cartCount');
 const clearCartBtn = document.getElementById('clearCartBtn');
 const placeOrderBtn = document.getElementById('placeOrderBtn');
@@ -77,7 +78,7 @@ const trackOrderId = document.getElementById('trackOrderId');
 const trackOrderBtn = document.getElementById('trackOrderBtn');
 const trackResult = document.getElementById('trackResult');
 
-// Seller password (CHANGE THIS TO YOUR PASSWORD)
+// Seller password
 const SELLER_PASSWORD = "mavi2025";
 
 let currentProduct = null;
@@ -138,7 +139,7 @@ function markOrderCompleted(orderId) {
         order.completedAt = new Date().toISOString();
         saveOrders();
         updateSellerDashboard();
-        showToast(`✅ Order ${orderId} marked as completed!`);
+        showToast(`✅ Order ${orderId} marked as completed!`, 4000);
     }
 }
 
@@ -150,7 +151,7 @@ function deleteOrder(orderId) {
         orders.splice(orderIndex, 1);
         saveOrders();
         updateSellerDashboard();
-        showToast(`🗑️ Order ${orderId} deleted`);
+        showToast(`🗑️ Order ${orderId} deleted`, 4000);
     }
 }
 
@@ -166,7 +167,7 @@ function trackOrder(orderId) {
     if (!order) {
         trackResult.innerHTML = `
             <div class="order-not-found">
-                <i class="fa-regular fa-circle-xmark"></i>
+                <i class="fa-regular fa-flower"></i>
                 <p>Order not found. Please check your Order ID and try again.</p>
             </div>
         `;
@@ -179,7 +180,7 @@ function trackOrder(orderId) {
     
     trackResult.innerHTML = `
         <div class="order-found">
-            <h4>Order Details</h4>
+            <h4>🌸 Order Details</h4>
             <p><strong>Order ID:</strong> ${order.id}</p>
             <p><strong>Date:</strong> ${order.date}</p>
             <p><strong>Customer:</strong> ${order.customer.name}</p>
@@ -202,7 +203,7 @@ function addToCart(productName, productPrice) {
     
     if (existingItem) {
         existingItem.quantity += 1;
-        showToast(`✨ ${productName} quantity increased to ${existingItem.quantity}`);
+        showToast(`✨ ${productName} quantity increased to ${existingItem.quantity}`, 3000);
     } else {
         const product = bouquetsData.find(p => p.name === productName);
         cart.push({
@@ -211,7 +212,7 @@ function addToCart(productName, productPrice) {
             quantity: 1,
             spark: product ? product.spark : ''
         });
-        showToast(`🌸 ${productName} added to cart!`);
+        showToast(`🌸 ${productName} added to cart!`, 3000);
     }
     
     saveCart();
@@ -223,16 +224,34 @@ function removeFromCart(index) {
     cart.splice(index, 1);
     saveCart();
     updateCartUI();
-    showToast(`🗑️ ${removedItem.name} removed from cart`);
+    showToast(`🗑️ ${removedItem.name} removed from cart`, 3000);
+}
+
+function updateQuantity(index, change) {
+    if (cart[index]) {
+        cart[index].quantity += change;
+        if (cart[index].quantity <= 0) {
+            cart.splice(index, 1);
+        }
+        saveCart();
+        updateCartUI();
+    }
 }
 
 function updateCartUI() {
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    cartCountSpan.textContent = totalItems;
+    if (cartCountSpan) cartCountSpan.textContent = totalItems;
     
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<div class="empty-cart">🛒 Your cart is empty. Add some beautiful bouquets!</div>';
-        cartTotalSpan.textContent = '₱0';
+        if (cartItemsContainer) cartItemsContainer.innerHTML = `
+            <div class="empty-cart">
+                <i class="fa-regular fa-flower"></i>
+                <p>YOUR BOUQUET BASKET IS EMPTY</p>
+                <span>Add some beautiful blooms to your collection</span>
+            </div>
+        `;
+        if (cartTotalSpan) cartTotalSpan.textContent = '₱0';
+        if (cartSubtotalSpan) cartSubtotalSpan.textContent = '₱0';
         return;
     }
     
@@ -249,7 +268,12 @@ function updateCartUI() {
                     <h4>${item.name}</h4>
                     <p>${item.spark || 'Fuzzy wire bouquet'}</p>
                 </div>
-                <div class="cart-item-price">₱${item.price} x ${item.quantity} = ₱${itemTotal}</div>
+                <div class="cart-item-quantity">
+                    <button class="quantity-btn" data-index="${index}" data-change="-1">-</button>
+                    <span>${item.quantity}</span>
+                    <button class="quantity-btn" data-index="${index}" data-change="+1">+</button>
+                </div>
+                <div class="cart-item-price">₱${itemTotal}</div>
                 <button class="remove-cart-item" data-index="${index}">
                     <i class="fa-regular fa-trash-can"></i>
                 </button>
@@ -257,8 +281,19 @@ function updateCartUI() {
         `;
     });
     
-    cartItemsContainer.innerHTML = itemsHtml;
-    cartTotalSpan.textContent = `₱${total.toLocaleString()}`;
+    if (cartItemsContainer) cartItemsContainer.innerHTML = itemsHtml;
+    if (cartTotalSpan) cartTotalSpan.textContent = `₱${total.toLocaleString()}`;
+    if (cartSubtotalSpan) cartSubtotalSpan.textContent = `₱${total.toLocaleString()}`;
+    
+    // Add event listeners for quantity buttons
+    document.querySelectorAll('.quantity-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(btn.dataset.index);
+            const change = parseInt(btn.dataset.change);
+            updateQuantity(index, change);
+        });
+    });
     
     document.querySelectorAll('.remove-cart-item').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -273,22 +308,88 @@ function clearCart() {
         cart = [];
         saveCart();
         updateCartUI();
-        showToast('Cart cleared');
+        showToast('Cart cleared', 3000);
     }
+}
+
+// Enhanced order confirmation with copy button
+function showOrderConfirmation(orderId, total) {
+    // Create a modal-like confirmation that stays until dismissed
+    const confirmationDiv = document.createElement('div');
+    confirmationDiv.className = 'order-confirmation-overlay';
+    confirmationDiv.innerHTML = `
+        <div class="order-confirmation-card">
+            <div class="confirmation-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3>🎉 Order Placed Successfully!</h3>
+            <div class="order-id-container">
+                <p class="order-id-label">Your Order ID:</p>
+                <div class="order-id-box">
+                    <span class="order-id-text" id="orderIdText">${orderId}</span>
+                    <button class="copy-id-btn" id="copyOrderIdBtn">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+            </div>
+            <div class="order-total-confirm">
+                <span>Total Amount:</span>
+                <strong>₱${total.toLocaleString()}</strong>
+            </div>
+            <p class="order-note">📦 Use this ID to track your order</p>
+            <button class="close-confirmation-btn" id="closeConfirmationBtn">Continue Shopping</button>
+        </div>
+    `;
+    
+    document.body.appendChild(confirmationDiv);
+    
+    // Add copy functionality
+    const copyBtn = document.getElementById('copyOrderIdBtn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            const orderIdText = document.getElementById('orderIdText').textContent;
+            navigator.clipboard.writeText(orderIdText).then(() => {
+                // Change button text temporarily
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+                showToast('Order ID copied to clipboard!', 2000);
+            }).catch(() => {
+                showToast('Press Ctrl+C to copy', 2000);
+            });
+        });
+    }
+    
+    // Close button functionality
+    const closeBtn = document.getElementById('closeConfirmationBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            confirmationDiv.remove();
+        });
+    }
+    
+    // Auto-close after 15 seconds (gives customer plenty of time)
+    setTimeout(() => {
+        if (document.body.contains(confirmationDiv)) {
+            confirmationDiv.remove();
+        }
+    }, 15000);
 }
 
 function placeOrder() {
     if (cart.length === 0) {
-        showToast('Please add items to your cart first!');
+        showToast('Please add items to your cart first!', 3000);
         return;
     }
     
-    const name = customerName.value.trim();
-    const facebook = customerFacebook.value.trim();
-    const address = customerAddress.value.trim();
+    const name = customerName?.value.trim();
+    const facebook = customerFacebook?.value.trim();
+    const address = customerAddress?.value.trim();
     
     if (!name || !facebook || !address) {
-        showToast('Please fill in all required fields!');
+        showToast('Please fill in all required fields!', 3000);
         return;
     }
     
@@ -305,7 +406,7 @@ function placeOrder() {
             quantity: item.quantity,
             subtotal: item.price * item.quantity 
         })),
-        specialInstructions: specialInstructions.value.trim(),
+        specialInstructions: specialInstructions?.value.trim() || '',
         total: total,
         status: 'Pending'
     };
@@ -314,19 +415,18 @@ function placeOrder() {
     saveOrders();
     updateSellerDashboard();
     
-    // Show order confirmation with tracking info
-    showToast(`🎉 Order placed successfully! Your Order ID: ${newOrder.id}`);
-    showToast(`📦 Use this ID to track your order: ${newOrder.id}`);
+    // Show enhanced confirmation with copy button (NO MORE QUICK TOASTS)
+    showOrderConfirmation(newOrder.id, total);
     
     cart = [];
     saveCart();
     updateCartUI();
-    customerName.value = '';
-    customerFacebook.value = '';
-    customerAddress.value = '';
-    specialInstructions.value = '';
+    if (customerName) customerName.value = '';
+    if (customerFacebook) customerFacebook.value = '';
+    if (customerAddress) customerAddress.value = '';
+    if (specialInstructions) specialInstructions.value = '';
     
-    document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('catalogSection')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Update seller dashboard
@@ -403,46 +503,58 @@ function updateSellerDashboard() {
     });
 }
 
-function showToast(message) {
+// UPDATED showToast function with adjustable duration
+function showToast(message, duration = 4000) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 10000);
+    setTimeout(() => toast.remove(), duration);
 }
 
 // Open modal with product details
 function openModal(product) {
     currentProduct = product;
-    modalImage.src = product.image;
-    modalBadge.textContent = product.badge;
-    modalName.textContent = product.name;
-    modalQuote.textContent = product.quote;
-    modalSpark.textContent = product.spark;
-    modalPrice.textContent = `₱ ${product.price}`;
-    productModal.style.display = 'flex';
+    if (modalImage) modalImage.src = product.image;
+    if (modalBadge) modalBadge.textContent = product.badge;
+    if (modalName) modalName.textContent = product.name;
+    if (modalQuote) modalQuote.textContent = product.quote;
+    if (modalSpark) modalSpark.textContent = product.spark;
+    if (modalPrice) modalPrice.textContent = `₱ ${product.price}`;
+    if (productModal) productModal.style.display = 'flex';
 }
 
 function closeModal() {
-    productModal.style.display = 'none';
+    if (productModal) productModal.style.display = 'none';
     currentProduct = null;
 }
 
 // Render simplified products
 function renderProducts() {
+    console.log('renderProducts called - filter:', currentFilter, 'search:', currentSearch);
+    
     let filtered = [...bouquetsData];
     
+    // Apply category filter
     if (currentFilter !== 'all') {
         filtered = filtered.filter(b => b.category === currentFilter);
     }
     
-    if (currentSearch.trim()) {
+    // Apply search filter
+    if (currentSearch && currentSearch.trim()) {
         const searchTerm = currentSearch.toLowerCase();
         filtered = filtered.filter(b => 
             b.name.toLowerCase().includes(searchTerm) || 
             b.quote.toLowerCase().includes(searchTerm) ||
             b.spark.toLowerCase().includes(searchTerm)
         );
+    }
+    
+    console.log('Filtered products count:', filtered.length);
+    
+    if (!bouquetGrid) {
+        console.error('bouquetGrid element not found!');
+        return;
     }
     
     if (filtered.length === 0) {
@@ -502,34 +614,34 @@ function addFilterButtons() {
 
 // Show password modal for seller access
 function showPasswordModal() {
-    sellerPasswordInput.value = '';
-    passwordError.style.display = 'none';
-    passwordModal.style.display = 'flex';
+    if (sellerPasswordInput) sellerPasswordInput.value = '';
+    if (passwordError) passwordError.style.display = 'none';
+    if (passwordModal) passwordModal.style.display = 'flex';
 }
 
 // Authenticate seller
 function authenticateSeller() {
-    const enteredPassword = sellerPasswordInput.value;
+    const enteredPassword = sellerPasswordInput?.value;
     if (enteredPassword === SELLER_PASSWORD) {
         isSellerAuthenticated = true;
-        passwordModal.style.display = 'none';
-        sellerDashboard.style.display = 'block';
+        if (passwordModal) passwordModal.style.display = 'none';
+        if (sellerDashboard) sellerDashboard.style.display = 'block';
         addFilterButtons();
         updateSellerDashboard();
-        sellerDashboard.scrollIntoView({ behavior: 'smooth' });
-        showToast('🔓 Welcome, Seller! Dashboard unlocked.');
+        if (sellerDashboard) sellerDashboard.scrollIntoView({ behavior: 'smooth' });
+        showToast('🔓 Welcome, Seller! Dashboard unlocked.', 4000);
     } else {
-        passwordError.style.display = 'block';
-        sellerPasswordInput.value = '';
-        sellerPasswordInput.focus();
+        if (passwordError) passwordError.style.display = 'block';
+        if (sellerPasswordInput) sellerPasswordInput.value = '';
+        if (sellerPasswordInput) sellerPasswordInput.focus();
     }
 }
 
 // Cancel password entry
 function cancelPassword() {
-    passwordModal.style.display = 'none';
-    sellerPasswordInput.value = '';
-    passwordError.style.display = 'none';
+    if (passwordModal) passwordModal.style.display = 'none';
+    if (sellerPasswordInput) sellerPasswordInput.value = '';
+    if (passwordError) passwordError.style.display = 'none';
 }
 
 // Modal Add to Cart
@@ -563,33 +675,36 @@ navLinks.forEach(link => {
         navLinks.forEach(l => l.classList.remove('active'));
         link.classList.add('active');
         currentFilter = link.dataset.nav;
+        console.log('Filter changed to:', currentFilter);
         renderProducts();
     });
 });
 
 // Search functionality
-searchInput.addEventListener('input', (e) => {
-    currentSearch = e.target.value;
-    renderProducts();
-});
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        currentSearch = e.target.value;
+        console.log('Search changed to:', currentSearch);
+        renderProducts();
+    });
+}
 
 // Event listeners
-clearCartBtn.addEventListener('click', clearCart);
-placeOrderBtn.addEventListener('click', placeOrder);
+if (clearCartBtn) clearCartBtn.addEventListener('click', clearCart);
+if (placeOrderBtn) placeOrderBtn.addEventListener('click', placeOrder);
 
 // Order Tracker Event
 if (trackOrderBtn) {
     trackOrderBtn.addEventListener('click', () => {
-        const orderId = trackOrderId.value.trim();
+        const orderId = trackOrderId?.value.trim();
         if (!orderId) {
-            showToast('Please enter an Order ID');
+            showToast('Please enter an Order ID', 3000);
             return;
         }
         trackOrder(orderId);
     });
 }
 
-// Also allow Enter key on track order input
 if (trackOrderId) {
     trackOrderId.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -605,10 +720,12 @@ if (trackOrderId) {
 if (showSellerBtn) {
     showSellerBtn.addEventListener('click', () => {
         if (isSellerAuthenticated) {
-            sellerDashboard.style.display = sellerDashboard.style.display === 'block' ? 'none' : 'block';
-            if (sellerDashboard.style.display === 'block') {
-                updateSellerDashboard();
-                sellerDashboard.scrollIntoView({ behavior: 'smooth' });
+            if (sellerDashboard) {
+                sellerDashboard.style.display = sellerDashboard.style.display === 'block' ? 'none' : 'block';
+                if (sellerDashboard.style.display === 'block') {
+                    updateSellerDashboard();
+                    sellerDashboard.scrollIntoView({ behavior: 'smooth' });
+                }
             }
         } else {
             showPasswordModal();
@@ -618,7 +735,7 @@ if (showSellerBtn) {
 
 if (closeDashboardBtn) {
     closeDashboardBtn.addEventListener('click', () => {
-        sellerDashboard.style.display = 'none';
+        if (sellerDashboard) sellerDashboard.style.display = 'none';
     });
 }
 
@@ -640,15 +757,25 @@ if (sellerPasswordInput) {
 // Auto-cleanup every hour
 setInterval(() => {
     cleanupExpiredOrders();
-    if (isSellerAuthenticated && sellerDashboard.style.display === 'block') {
+    if (isSellerAuthenticated && sellerDashboard?.style.display === 'block') {
         updateSellerDashboard();
     }
 }, 60 * 60 * 1000);
 
-// Initialize
-loadCart();
-loadOrders();
-renderProducts();
+// Initialize function
+function init() {
+    console.log('Initializing Mavi Petals...');
+    loadCart();
+    loadOrders();
+    renderProducts();
+}
+
+// Run initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 
 console.log('🌸 Mavi Petals — Seller dashboard is password protected!');
 console.log('🔐 Seller password: "mavi2025" (change this in script.js)');
