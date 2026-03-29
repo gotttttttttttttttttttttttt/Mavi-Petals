@@ -346,7 +346,7 @@ body::before {
     margin: 1.5rem 0;
 }
 
-/* SIMPLIFIED PRODUCT CARD - Only Image, Name, Price, View Details */
+/* SIMPLIFIED PRODUCT CARD */
 .bouquet-card {
     background: rgba(255, 250, 245, 0.9);
     border-radius: 24px;
@@ -737,30 +737,117 @@ body::before {
     padding: 2rem;
 }
 
-/* Seller Button */
-.seller-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #b28b65;
-    border: none;
-    padding: 0.7rem 1.2rem;
-    border-radius: 50px;
-    color: white;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    z-index: 100;
+/* Order Filters */
+.order-filters {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    gap: 0.8rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: rgba(210, 180, 150, 0.3);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #5c3e2e;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
-.seller-btn:hover {
-    background: #9b7352;
-    transform: scale(1.02);
+.filter-btn.active {
+    background: #b28b65;
+    color: white;
+}
+
+.filter-btn:hover {
+    background: #b28b65;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Password Modal */
+.password-modal {
+    max-width: 380px;
+}
+
+.password-modal h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.password-modal p {
+    color: #7f6e5d;
+    margin-bottom: 1.5rem;
+}
+
+.password-input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid rgba(210, 180, 150, 0.5);
+    border-radius: 40px;
+    font-family: 'Montserrat', sans-serif;
+    background: rgba(255, 255, 255, 0.9);
+    outline: none;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.password-input:focus {
+    border-color: #b28b65;
+}
+
+.password-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.password-submit-btn {
+    background: linear-gradient(135deg, #b28b65, #9b7352);
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 40px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.password-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(178, 139, 101, 0.4);
+}
+
+.password-cancel-btn {
+    background: rgba(210, 180, 150, 0.3);
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 40px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #5c3e2e;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.password-cancel-btn:hover {
+    background: #b47c5e;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.password-error {
+    color: #e74c3c;
+    font-size: 0.8rem;
+    margin-top: 1rem;
+    text-align: center;
 }
 
 /* Footer */
@@ -1070,13 +1157,6 @@ body::before {
         flex-direction: column;
     }
     
-    .seller-btn {
-        bottom: 15px;
-        right: 15px;
-        padding: 0.6rem 1rem;
-        font-size: 0.75rem;
-    }
-    
     .toast-notification {
         white-space: normal;
         text-align: center;
@@ -1094,6 +1174,10 @@ body::before {
     
     .modal-price {
         font-size: 1.6rem;
+    }
+    
+    .password-buttons {
+        flex-direction: column;
     }
 }
 
@@ -1127,125 +1211,4 @@ body::before {
         align-items: center;
         gap: 0.5rem;
     }
-
-    /* Order Management Styles */
-.order-status {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin-left: 0.5rem;
-}
-
-.order-status.status-pending {
-    background: #f39c12;
-    color: white;
-}
-
-.order-status.status-completed {
-    background: #27ae60;
-    color: white;
-}
-
-.order-actions {
-    display: flex;
-    gap: 0.8rem;
-    margin-top: 0.8rem;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-}
-
-.complete-order-btn {
-    background: #27ae60;
-    border: none;
-    padding: 0.4rem 1rem;
-    border-radius: 30px;
-    font-size: 0.7rem;
-    font-weight: 500;
-    color: white;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-.complete-order-btn:hover {
-    background: #219a52;
-    transform: translateY(-2px);
-}
-
-.delete-order-btn {
-    background: #e74c3c;
-    border: none;
-    padding: 0.4rem 1rem;
-    border-radius: 30px;
-    font-size: 0.7rem;
-    font-weight: 500;
-    color: white;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-.delete-order-btn:hover {
-    background: #c0392b;
-    transform: translateY(-2px);
-}
-
-.completed-badge {
-    background: rgba(39, 174, 96, 0.2);
-    color: #27ae60;
-    padding: 0.4rem 1rem;
-    border-radius: 30px;
-    font-size: 0.7rem;
-    font-weight: 500;
-}
-
-.order-filters {
-    display: flex;
-    gap: 0.8rem;
-    margin: 1rem 0;
-    flex-wrap: wrap;
-}
-
-.filter-btn {
-    background: rgba(210, 180, 150, 0.3);
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 30px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #5c3e2e;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.filter-btn.active {
-    background: #b28b65;
-    color: white;
-}
-
-.filter-btn:hover {
-    background: #b28b65;
-    color: white;
-    transform: translateY(-2px);
-}
-
-.order-card {
-    position: relative;
-    transition: all 0.2s;
-}
-
-.order-card.status-pending {
-    border-left: 4px solid #f39c12;
-}
-
-.order-card.status-completed {
-    border-left: 4px solid #27ae60;
-    opacity: 0.85;
-}
 }
