@@ -72,8 +72,13 @@ const submitPasswordBtn = document.getElementById('submitPasswordBtn');
 const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
 const passwordError = document.getElementById('passwordError');
 
-// Seller password (change this to your desired password)
-const SELLER_PASSWORD = "mavi2025"; // You can change this password
+// Order Tracker Elements
+const trackOrderId = document.getElementById('trackOrderId');
+const trackOrderBtn = document.getElementById('trackOrderBtn');
+const trackResult = document.getElementById('trackResult');
+
+// Seller password (CHANGE THIS TO YOUR PASSWORD)
+const SELLER_PASSWORD = "mavi2025";
 
 let currentProduct = null;
 let isSellerAuthenticated = false;
@@ -152,6 +157,43 @@ function deleteOrder(orderId) {
 // Get pending orders count
 function getPendingOrdersCount() {
     return orders.filter(order => order.status === 'Pending').length;
+}
+
+// Track order by ID (for customers)
+function trackOrder(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+        trackResult.innerHTML = `
+            <div class="order-not-found">
+                <i class="fa-regular fa-circle-xmark"></i>
+                <p>Order not found. Please check your Order ID and try again.</p>
+            </div>
+        `;
+        trackResult.style.display = 'block';
+        return;
+    }
+    
+    const statusClass = order.status === 'Pending' ? 'order-status-pending' : 'order-status-completed';
+    const statusText = order.status === 'Pending' ? '⏳ Pending' : '✅ Completed';
+    
+    trackResult.innerHTML = `
+        <div class="order-found">
+            <h4>Order Details</h4>
+            <p><strong>Order ID:</strong> ${order.id}</p>
+            <p><strong>Date:</strong> ${order.date}</p>
+            <p><strong>Customer:</strong> ${order.customer.name}</p>
+            <p><strong>Delivery Address:</strong> ${order.customer.address}</p>
+            <p><strong>Status:</strong> <span class="${statusClass}">${statusText}</span></p>
+            <h5 style="margin-top: 1rem;">Items Ordered:</h5>
+            <ul class="order-items">
+                ${order.items.map(item => `<li>${item.name} x${item.quantity} - ₱${item.subtotal}</li>`).join('')}
+            </ul>
+            ${order.specialInstructions ? `<p><em>Note: ${order.specialInstructions}</em></p>` : ''}
+            <div class="order-total">Total: ₱${order.total.toLocaleString()}</div>
+        </div>
+    `;
+    trackResult.style.display = 'block';
 }
 
 // Add to cart
@@ -272,6 +314,10 @@ function placeOrder() {
     saveOrders();
     updateSellerDashboard();
     
+    // Show order confirmation with tracking info
+    showToast(`🎉 Order placed successfully! Your Order ID: ${newOrder.id}`);
+    showToast(`📦 Use this ID to track your order: ${newOrder.id}`);
+    
     cart = [];
     saveCart();
     updateCartUI();
@@ -280,7 +326,6 @@ function placeOrder() {
     customerAddress.value = '';
     specialInstructions.value = '';
     
-    showToast(`🎉 Order placed successfully! Order ID: ${newOrder.id}`);
     document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -363,7 +408,7 @@ function showToast(message) {
     toast.className = 'toast-notification';
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 // Open modal with product details
@@ -469,7 +514,6 @@ function authenticateSeller() {
         isSellerAuthenticated = true;
         passwordModal.style.display = 'none';
         sellerDashboard.style.display = 'block';
-        showSellerBtn.style.display = 'flex';
         addFilterButtons();
         updateSellerDashboard();
         sellerDashboard.scrollIntoView({ behavior: 'smooth' });
@@ -533,6 +577,30 @@ searchInput.addEventListener('input', (e) => {
 clearCartBtn.addEventListener('click', clearCart);
 placeOrderBtn.addEventListener('click', placeOrder);
 
+// Order Tracker Event
+if (trackOrderBtn) {
+    trackOrderBtn.addEventListener('click', () => {
+        const orderId = trackOrderId.value.trim();
+        if (!orderId) {
+            showToast('Please enter an Order ID');
+            return;
+        }
+        trackOrder(orderId);
+    });
+}
+
+// Also allow Enter key on track order input
+if (trackOrderId) {
+    trackOrderId.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const orderId = trackOrderId.value.trim();
+            if (orderId) {
+                trackOrder(orderId);
+            }
+        }
+    });
+}
+
 // Seller Dashboard Toggle with password
 if (showSellerBtn) {
     showSellerBtn.addEventListener('click', () => {
@@ -575,55 +643,6 @@ setInterval(() => {
     if (isSellerAuthenticated && sellerDashboard.style.display === 'block') {
         updateSellerDashboard();
     }
-
-    // ========== SELLER ACCESS METHODS ==========
-
-// Method 1: Double-click the brand header
-const brandHeader = document.querySelector('.brand-block');
-if (brandHeader) {
-    brandHeader.addEventListener('dblclick', () => {
-        showSellerBtn.style.display = 'flex';
-        showToast('🔐 Seller mode activated. Click Seller View to access dashboard.');
-        sessionStorage.setItem('seller_activated', 'true');
-    });
-}
-
-// Method 2: Check URL parameter (?admin=true)
-if (window.location.href.includes('?admin=true') || window.location.href.includes('&admin=true')) {
-    showSellerBtn.style.display = 'flex';
-    sessionStorage.setItem('seller_activated', 'true');
-    console.log('🔐 Seller mode activated via URL');
-}
-
-// Method 3: Check session storage for persistent access
-if (sessionStorage.getItem('seller_activated') === 'true') {
-    showSellerBtn.style.display = 'flex';
-}
-
-// Method 4: Keyboard shortcut (Ctrl/Cmd + Shift + S)
-document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'M') {
-        e.preventDefault();
-        showSellerBtn.style.display = 'flex';
-        sessionStorage.setItem('seller_activated', 'true');
-        showToast('🔐 Seller mode activated. Click Seller View to access dashboard.');
-    }
-});
-
-// Method 5: Add a hidden button in footer (for debugging)
-const footer = document.querySelector('.catalog-footer');
-if (footer) {
-    const hiddenAccess = document.createElement('div');
-    hiddenAccess.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;';
-    hiddenAccess.innerHTML = '<a href="?admin=true" id="hiddenAdminLink"></a>';
-    footer.appendChild(hiddenAccess);
-}
-
-console.log('🔐 Seller access methods:');
-console.log('   → Double-click "HANDMADE Mavi Petals" section');
-console.log('   → Add ?admin=true to URL');
-console.log('   → Press Ctrl+Shift+S (or Cmd+Shift+S on Mac)');
-
 }, 60 * 60 * 1000);
 
 // Initialize
@@ -632,5 +651,5 @@ loadOrders();
 renderProducts();
 
 console.log('🌸 Mavi Petals — Seller dashboard is password protected!');
-console.log('🔐 Seller password: "mavi2025" (you can change this in script.js)');
-console.log('📋 Customers cannot see the seller dashboard at all!');
+console.log('🔐 Seller password: "mavi2025" (change this in script.js)');
+console.log('📦 Customers can track their orders by Order ID!');
