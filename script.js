@@ -62,14 +62,28 @@ const modalSpark = document.getElementById('modalSpark');
 const modalPrice = document.getElementById('modalPrice');
 const modalAddToCartBtn = document.getElementById('modalAddToCartBtn');
 
+// Seller Dashboard Elements
+const sellerDashboard = document.getElementById('sellerDashboard');
+const showSellerBtn = document.getElementById('showSellerBtn');
+const closeDashboardBtn = document.getElementById('closeDashboardBtn');
+const passwordModal = document.getElementById('passwordModal');
+const sellerPasswordInput = document.getElementById('sellerPassword');
+const submitPasswordBtn = document.getElementById('submitPasswordBtn');
+const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+const passwordError = document.getElementById('passwordError');
+
+// Seller password (change this to your desired password)
+const SELLER_PASSWORD = "mavi2025"; // You can change this password
+
 let currentProduct = null;
+let isSellerAuthenticated = false;
 
 // Cart State
 let cart = [];
 let currentFilter = 'all';
 let currentSearch = '';
 let orders = [];
-let orderStatusFilter = 'all'; // 'all', 'pending', 'completed'
+let orderStatusFilter = 'all';
 
 // Load cart from localStorage
 function loadCart() {
@@ -88,7 +102,6 @@ function loadOrders() {
     const savedOrders = localStorage.getItem('mavi_petals_orders');
     if (savedOrders) {
         orders = JSON.parse(savedOrders);
-        // Check for expired completed orders (older than 24 hours)
         cleanupExpiredOrders();
     }
     updateSellerDashboard();
@@ -98,18 +111,9 @@ function saveOrders() {
     localStorage.setItem('mavi_petals_orders', JSON.stringify(orders));
 }
 
-// Clean up orders that have been completed for more than 24 hours
+// Clean up orders completed more than 24 hours ago
 function cleanupExpiredOrders() {
     const now = new Date();
-    const expiredCount = orders.filter(order => {
-        if (order.status === 'Completed' && order.completedAt) {
-            const completedDate = new Date(order.completedAt);
-            const hoursDiff = (now - completedDate) / (1000 * 60 * 60);
-            return hoursDiff >= 24;
-        }
-        return false;
-    }).length;
-    
     orders = orders.filter(order => {
         if (order.status === 'Completed' && order.completedAt) {
             const completedDate = new Date(order.completedAt);
@@ -118,11 +122,7 @@ function cleanupExpiredOrders() {
         }
         return true;
     });
-    
-    if (expiredCount > 0) {
-        console.log(`🗑️ Auto-cleaned ${expiredCount} completed orders (older than 24 hours)`);
-        saveOrders();
-    }
+    saveOrders();
 }
 
 // Mark order as completed
@@ -133,7 +133,7 @@ function markOrderCompleted(orderId) {
         order.completedAt = new Date().toISOString();
         saveOrders();
         updateSellerDashboard();
-        showToast(`✅ Order ${orderId} marked as completed! It will be auto-deleted after 24 hours.`);
+        showToast(`✅ Order ${orderId} marked as completed!`);
     }
 }
 
@@ -145,7 +145,7 @@ function deleteOrder(orderId) {
         orders.splice(orderIndex, 1);
         saveOrders();
         updateSellerDashboard();
-        showToast(`🗑️ Order ${orderId} deleted permanently`);
+        showToast(`🗑️ Order ${orderId} deleted`);
     }
 }
 
@@ -284,24 +284,16 @@ function placeOrder() {
     document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Update seller dashboard with order management
+// Update seller dashboard
 function updateSellerDashboard() {
     const totalOrdersCountSpan = document.getElementById('totalOrdersCount');
     const totalRevenueSpan = document.getElementById('totalRevenue');
     const ordersListContainer = document.getElementById('ordersList');
     
-    // Update stats
-    const pendingOrders = getPendingOrdersCount();
     if (totalOrdersCountSpan) totalOrdersCountSpan.textContent = orders.length;
-    
     const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
     if (totalRevenueSpan) totalRevenueSpan.textContent = `₱${totalRevenue.toLocaleString()}`;
     
-    // Update pending orders badge (optional - add to HTML if needed)
-    const pendingBadge = document.getElementById('pendingOrdersBadge');
-    if (pendingBadge) pendingBadge.textContent = pendingOrders;
-    
-    // Filter orders based on status
     let filteredOrders = orders;
     if (orderStatusFilter === 'pending') {
         filteredOrders = orders.filter(o => o.status === 'Pending');
@@ -349,7 +341,6 @@ function updateSellerDashboard() {
     
     if (ordersListContainer) ordersListContainer.innerHTML = ordersHtml;
     
-    // Add event listeners to order buttons
     document.querySelectorAll('.complete-order-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const orderId = btn.getAttribute('data-id');
@@ -439,6 +430,64 @@ function renderProducts() {
     });
 }
 
+// Add filter buttons to seller dashboard
+function addFilterButtons() {
+    const sellerStatsDiv = document.querySelector('.seller-stats');
+    if (sellerStatsDiv && !document.getElementById('orderFilters')) {
+        const filterDiv = document.createElement('div');
+        filterDiv.className = 'order-filters';
+        filterDiv.id = 'orderFilters';
+        filterDiv.innerHTML = `
+            <button class="filter-btn active" data-filter="all">📋 All Orders</button>
+            <button class="filter-btn" data-filter="pending">⏳ Pending (${getPendingOrdersCount()})</button>
+            <button class="filter-btn" data-filter="completed">✅ Completed</button>
+        `;
+        sellerStatsDiv.parentNode.insertBefore(filterDiv, sellerStatsDiv.nextSibling);
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                orderStatusFilter = btn.getAttribute('data-filter');
+                updateSellerDashboard();
+            });
+        });
+    }
+}
+
+// Show password modal for seller access
+function showPasswordModal() {
+    sellerPasswordInput.value = '';
+    passwordError.style.display = 'none';
+    passwordModal.style.display = 'flex';
+}
+
+// Authenticate seller
+function authenticateSeller() {
+    const enteredPassword = sellerPasswordInput.value;
+    if (enteredPassword === SELLER_PASSWORD) {
+        isSellerAuthenticated = true;
+        passwordModal.style.display = 'none';
+        sellerDashboard.style.display = 'block';
+        showSellerBtn.style.display = 'flex';
+        addFilterButtons();
+        updateSellerDashboard();
+        sellerDashboard.scrollIntoView({ behavior: 'smooth' });
+        showToast('🔓 Welcome, Seller! Dashboard unlocked.');
+    } else {
+        passwordError.style.display = 'block';
+        sellerPasswordInput.value = '';
+        sellerPasswordInput.focus();
+    }
+}
+
+// Cancel password entry
+function cancelPassword() {
+    passwordModal.style.display = 'none';
+    sellerPasswordInput.value = '';
+    passwordError.style.display = 'none';
+}
+
 // Modal Add to Cart
 if (modalAddToCartBtn) {
     modalAddToCartBtn.addEventListener('click', () => {
@@ -457,6 +506,9 @@ if (closeModalBtn) {
 window.addEventListener('click', (e) => {
     if (e.target === productModal) {
         closeModal();
+    }
+    if (e.target === passwordModal) {
+        cancelPassword();
     }
 });
 
@@ -481,69 +533,104 @@ searchInput.addEventListener('input', (e) => {
 clearCartBtn.addEventListener('click', clearCart);
 placeOrderBtn.addEventListener('click', placeOrder);
 
-// Seller Dashboard Toggle
-const sellerDashboard = document.getElementById('sellerDashboard');
-const showSellerBtn = document.getElementById('showSellerBtn');
-const closeDashboardBtn = document.getElementById('closeDashboardBtn');
-
-// Add filter buttons to seller dashboard (update HTML separately)
-function addFilterButtons() {
-    const sellerStatsDiv = document.querySelector('.seller-stats');
-    if (sellerStatsDiv && !document.getElementById('orderFilters')) {
-        const filterDiv = document.createElement('div');
-        filterDiv.className = 'order-filters';
-        filterDiv.id = 'orderFilters';
-        filterDiv.innerHTML = `
-            <button class="filter-btn active" data-filter="all">📋 All Orders</button>
-            <button class="filter-btn" data-filter="pending">⏳ Pending (${getPendingOrdersCount()})</button>
-            <button class="filter-btn" data-filter="completed">✅ Completed</button>
-        `;
-        sellerStatsDiv.parentNode.insertBefore(filterDiv, sellerStatsDiv.nextSibling);
-        
-        // Add filter event listeners
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                orderStatusFilter = btn.getAttribute('data-filter');
-                updateSellerDashboard();
-            });
-        });
-    }
-}
-
+// Seller Dashboard Toggle with password
 if (showSellerBtn) {
     showSellerBtn.addEventListener('click', () => {
-        sellerDashboard.classList.toggle('show');
-        if (sellerDashboard.classList.contains('show')) {
-            addFilterButtons();
-            updateSellerDashboard();
-            sellerDashboard.scrollIntoView({ behavior: 'smooth' });
+        if (isSellerAuthenticated) {
+            sellerDashboard.style.display = sellerDashboard.style.display === 'block' ? 'none' : 'block';
+            if (sellerDashboard.style.display === 'block') {
+                updateSellerDashboard();
+                sellerDashboard.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            showPasswordModal();
         }
     });
 }
 
 if (closeDashboardBtn) {
     closeDashboardBtn.addEventListener('click', () => {
-        sellerDashboard.classList.remove('show');
+        sellerDashboard.style.display = 'none';
+    });
+}
+
+// Password modal buttons
+if (submitPasswordBtn) {
+    submitPasswordBtn.addEventListener('click', authenticateSeller);
+}
+if (cancelPasswordBtn) {
+    cancelPasswordBtn.addEventListener('click', cancelPassword);
+}
+if (sellerPasswordInput) {
+    sellerPasswordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            authenticateSeller();
+        }
     });
 }
 
 // Auto-cleanup every hour
 setInterval(() => {
     cleanupExpiredOrders();
-    updateSellerDashboard();
-}, 60 * 60 * 1000); // Check every hour
+    if (isSellerAuthenticated && sellerDashboard.style.display === 'block') {
+        updateSellerDashboard();
+    }
+
+    // ========== SELLER ACCESS METHODS ==========
+
+// Method 1: Double-click the brand header
+const brandHeader = document.querySelector('.brand-block');
+if (brandHeader) {
+    brandHeader.addEventListener('dblclick', () => {
+        showSellerBtn.style.display = 'flex';
+        showToast('🔐 Seller mode activated. Click Seller View to access dashboard.');
+        sessionStorage.setItem('seller_activated', 'true');
+    });
+}
+
+// Method 2: Check URL parameter (?admin=true)
+if (window.location.href.includes('?admin=true') || window.location.href.includes('&admin=true')) {
+    showSellerBtn.style.display = 'flex';
+    sessionStorage.setItem('seller_activated', 'true');
+    console.log('🔐 Seller mode activated via URL');
+}
+
+// Method 3: Check session storage for persistent access
+if (sessionStorage.getItem('seller_activated') === 'true') {
+    showSellerBtn.style.display = 'flex';
+}
+
+// Method 4: Keyboard shortcut (Ctrl/Cmd + Shift + S)
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'M') {
+        e.preventDefault();
+        showSellerBtn.style.display = 'flex';
+        sessionStorage.setItem('seller_activated', 'true');
+        showToast('🔐 Seller mode activated. Click Seller View to access dashboard.');
+    }
+});
+
+// Method 5: Add a hidden button in footer (for debugging)
+const footer = document.querySelector('.catalog-footer');
+if (footer) {
+    const hiddenAccess = document.createElement('div');
+    hiddenAccess.style.cssText = 'position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;';
+    hiddenAccess.innerHTML = '<a href="?admin=true" id="hiddenAdminLink"></a>';
+    footer.appendChild(hiddenAccess);
+}
+
+console.log('🔐 Seller access methods:');
+console.log('   → Double-click "HANDMADE Mavi Petals" section');
+console.log('   → Add ?admin=true to URL');
+console.log('   → Press Ctrl+Shift+S (or Cmd+Shift+S on Mac)');
+
+}, 60 * 60 * 1000);
 
 // Initialize
 loadCart();
 loadOrders();
 renderProducts();
-addFilterButtons();
 
-console.log('🌸 Mavi Petals — Simplified cards with order management!');
-console.log('📋 Seller dashboard now has:');
-console.log('   ✅ Mark orders as Completed');
-console.log('   🗑️ Delete orders manually');
-console.log('   ⏰ Auto-delete completed orders after 24 hours');
-console.log('   📊 Filter by Pending/Completed/All');
+console.log('🌸 Mavi Petals — Seller dashboard is password protected!');
+console.log('🔐 Seller password: "mavi2025" (you can change this in script.js)');
+console.log('📋 Customers cannot see the seller dashboard at all!');
