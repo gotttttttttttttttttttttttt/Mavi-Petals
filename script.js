@@ -780,3 +780,37 @@ if (document.readyState === 'loading') {
 console.log('🌸 Mavi Petals — Seller dashboard is password protected!');
 console.log('🔐 Seller password: "mavi2025" (change this in script.js)');
 console.log('📦 Customers can track their orders by Order ID!');
+
+// ========== LOGOUT FUNCTION - Returns to FileMaker Login ==========
+function logoutAndReturnToFileMaker() {
+    // Optional: Clear customer data or cart on logout
+    // localStorage.removeItem('mavi_petals_cart');
+    // localStorage.removeItem('mavi_petals_orders');
+    
+    // Show a quick confirmation
+    showToast('Logging out... Redirecting to FileMaker', 2000);
+    
+    // Redirect to FileMaker login
+    // IMPORTANT: Replace with your actual FileMaker database path and script
+    setTimeout(() => {
+        window.location.href = 'fmp://127.0.0.1/YourDatabase.fmp12?script=ShowLogin';
+    }, 500);
+}
+
+// Attach logout event to button(s)
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        logoutAndReturnToFileMaker();
+    });
+}
+
+// If you also have a footer logout button
+const logoutBtnFooter = document.getElementById('logoutBtnFooter');
+if (logoutBtnFooter) {
+    logoutBtnFooter.addEventListener('click', (e) => {
+        e.preventDefault();
+        logoutAndReturnToFileMaker();
+    });
+}
