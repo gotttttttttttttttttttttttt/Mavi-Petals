@@ -788,7 +788,7 @@ function logoutAndReturnToFileMaker() {
     
     // Redirect to FileMaker login using currently open database
     setTimeout(() => {
-        window.location.href = 'fmp://$/ShowLogin';
+        window.location.href = 'fmp://$/Mavic.fmp12?script=ShowLogin';
     }, 500);
 }
 
