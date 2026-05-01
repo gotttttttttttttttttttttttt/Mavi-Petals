@@ -783,17 +783,12 @@ console.log('📦 Customers can track their orders by Order ID!');
 
 // ========== LOGOUT FUNCTION - Returns to FileMaker Login ==========
 function logoutAndReturnToFileMaker() {
-    // Optional: Clear customer data or cart on logout
-    // localStorage.removeItem('mavi_petals_cart');
-    // localStorage.removeItem('mavi_petals_orders');
-    
     // Show a quick confirmation
     showToast('Logging out... Redirecting to FileMaker', 2000);
     
-    // Redirect to FileMaker login
-    // IMPORTANT: Replace with your actual FileMaker database path and script
+    // Redirect to FileMaker login using currently open database
     setTimeout(() => {
-       window.location.href = 'fmp://$/ShowLogin';
+        window.location.href = 'fmp://$/ShowLogin';
     }, 500);
 }
 
@@ -806,7 +801,6 @@ if (logoutBtn) {
     });
 }
 
-// If you also have a footer logout button
 const logoutBtnFooter = document.getElementById('logoutBtnFooter');
 if (logoutBtnFooter) {
     logoutBtnFooter.addEventListener('click', (e) => {
