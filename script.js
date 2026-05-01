@@ -793,7 +793,7 @@ function logoutAndReturnToFileMaker() {
     // Redirect to FileMaker login
     // IMPORTANT: Replace with your actual FileMaker database path and script
     setTimeout(() => {
-       window.location.href = 'fmp://127.0.0.1/C:/Users/kithb/Downloads/Mavic.fmp12?script=ShowLogin';
+       window.location.href = 'fmp://$/ShowLogin';
     }, 500);
 }
 
